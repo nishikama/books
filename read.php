@@ -8,7 +8,7 @@ try {
 }
 
 // 2. データ検索SQL作成
-$stmt = $pdo->prepare("SELECT * FROM gs_bm_table");
+$stmt = $pdo->prepare("SELECT * FROM gs_bd_table");
 $status = $stmt->execute();
 
 // 3. データ検索処理後
@@ -27,7 +27,7 @@ if ($status === false) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>書籍に関するアンケート</title>
+    <title>書籍データの表示</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 
@@ -37,26 +37,28 @@ if ($status === false) {
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="col text-center">アンケート結果の表示</h3>
+                        <h3 class="col text-center">書籍データの表示</h3>
                     </div>
                     <div class="card-body">
 
                         <table class="table">
                             <tr>
-                                <th>登録日時</th>
+                                <th>登録番号</th>
                                 <th>書籍名</th>
-                                <th>書籍URL</th>
-                                <th>書籍コメント</th>
+                                <th>著者名</th>
+                                <th>出版社名</th>
+                                <th>出版日</th>
                             </tr>
 <?php
                     if (!empty($status)) {
                         while( $result = $stmt->fetch(PDO::FETCH_ASSOC)){ 
 ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($result['indate'], ENT_QUOTES); ?></td>
-                                <td><?php echo htmlspecialchars($result['bookname'], ENT_QUOTES); ?></td>
-                                <td><?php echo htmlspecialchars($result['bookurl'], ENT_QUOTES); ?></td>
-                                <td><?php echo nl2br(htmlspecialchars($result['bookcomment'], ENT_QUOTES)); ?></td>
+                                <td><?php echo htmlspecialchars($result['id'], ENT_QUOTES); ?></td>
+                                <td><?php echo htmlspecialchars($result['title'], ENT_QUOTES); ?></td>
+                                <td><?php echo htmlspecialchars($result['authors'], ENT_QUOTES); ?></td>
+                                <td><?php echo htmlspecialchars($result['publisher'], ENT_QUOTES); ?></td>
+                                <td><?php echo htmlspecialchars($result['publishedDate'], ENT_QUOTES); ?></td>
                             </tr>
 <?php
                         }
@@ -65,7 +67,7 @@ if ($status === false) {
                         </table>
                     </div>
                     <div class="card-footer">
-                        <p class="col text-center"><a href="./index.php">アンケートフォームへ戻る</a></p>
+                        <p class="col text-center"><a href="./index.php">検索フォームへ戻る</a></p>
                     </div>
                 </div>
             </div>

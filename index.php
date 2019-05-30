@@ -1,20 +1,3 @@
-<?php
-
-// セッション変数を使うことを宣言する
-session_start();
-session_regenerate_id(true);
-
-// もしセッション変数に定義がある場合は、入力した内容をセットする
-$bookname = $_SESSION['bookname'] ?? '';
-$bookurl = $_SESSION['bookurl'] ?? '';
-$bookcomment = $_SESSION['bookcomment'] ?? '';
-
-// サニタイズする
-$bookname = htmlspecialchars($bookname, ENT_QUOTES);
-$bookurl = htmlspecialchars($bookurl, ENT_QUOTES);
-$bookcomment = htmlspecialchars($bookcomment, ENT_QUOTES);
-
-?>
 <!DOCTYPE html>
 <html lang="ja">
 
@@ -39,18 +22,20 @@ $bookcomment = htmlspecialchars($bookcomment, ENT_QUOTES);
                             <div class="form-group">
                                 <label for="bookKeywords">キーワード：</label>
                                 <div class="col-sm-10">
-                                    <input type="text" id="bookKeywords" name="bookKeywords" value="<?php echo $bookKeywords; ?>" class="form-control">
+                                    <input type="text" id="bookKeywords" name="bookKeywords" class="form-control">
                                 </div>
                             </div>
 
                             <div class="form-group">
                                 <div class="col-sm-10 col-sm-offset-2">
-                                    <input type="submit" id="submit" value="送信" class="btn btn-primary">
+                                    <input type="submit" id="search" value="検索" class="btn btn-primary">
                                 </div>
                             </div>
+
+                            <div id="results"></div>
+                            <div id="pager"></div>
+
                         </form>
-                        <div id="results"></div>
-                        <div id="pager"></div>
                     </div>
                 </div>
             </div>
@@ -63,8 +48,7 @@ $bookcomment = htmlspecialchars($bookcomment, ENT_QUOTES);
         let  page = 1;
         $(() => {
 
-            // こうやれば、リロードしてもアラートが出ない？かも？
-            $('#submit').on('click', (e) => {
+            $('#search').on('click', (e) => {
                 e.preventDefault();
                 $.ajax({
                     url: './getBookdata.php',
@@ -77,31 +61,69 @@ $bookcomment = htmlspecialchars($bookcomment, ENT_QUOTES);
                 }).done((data, textStatus, jqXHR) => {
                     let $table = $('<table class="table">');
                     $table.append('<tr><th>書籍名</th><th>著者名</th><th>出版社名</th><th>出版日</th></tr>');
+                    let authors = [];
                     $.each(data.items, (i, item) => {
-                        let authors = item.volumeInfo.authors;
-                        $table.append(`<tr><td>${item.volumeInfo.title ? item.volumeInfo.title : ''}</td><td>${item.volumeInfo.authors ? item.volumeInfo.authors : ''}</td><td>${item.volumeInfo.publisher ? item.volumeInfo.publisher : ''}</td><td>${item.volumeInfo.publishedDate ? item.volumeInfo.publishedDate : ''}</td></tr>`);
+                        authors[i] = '';
+                        $.each(item.volumeInfo.authors, (j, author) => {
+                            authors[i] += author ? author : '';
+                            if (j < item.volumeInfo.authors.length - 1) {
+                                authors[i] += ', ';
+                            }
+                        })
+                        $table.append(`<tr><td>${item.volumeInfo.title ? item.volumeInfo.title : ''}</td><td>${authors[i]}</td><td>${item.volumeInfo.publisher ? item.volumeInfo.publisher : ''}</td><td>${item.volumeInfo.publishedDate ? item.volumeInfo.publishedDate : ''}</td><td><input type="submit" data-index="index${i + 1}" class="save btn-sm btn-primary" value="保存"></td></tr>`);
                     });
                     $('#results').html($table);
 
+                    let $prev = '';
+                    let $next = '';
                     if (page > 1) {
-                        $('#pager').append('<a id="prev" href="javascript:void(0);">前へ</a>');
+                        $prev = '<a id="prev" href="javascript:void(0);">前へ</a>';
                     } 
                     if (page < data.totalItems) {
-                        $('#pager').append('<a id="next" href="javascript:void(0);">次へ</a>');
+                        $next = '<a id="next" href="javascript:void(0);">次へ</a>';
                     }
+                    if (page > 1 && page < data.totalItems) {
+                        $('#pager').html(page + 'ページ　' + $prev + '｜' + $next);
+                    }
+                    else {
+                        $('#pager').html(page + 'ページ　' + $prev + $next);
+                    }
+
+                    $('.save').on('click', (e) => {
+                        e.preventDefault();
+                        const dataNum = parseInt($(e.currentTarget).data('index').substr(5)) - 1;
+                        $.ajax({
+                            url: './insert.php',
+                            type: 'POST',
+                            data: {
+                                "title": data.items[dataNum].volumeInfo.title,
+                                "authors": authors[dataNum],
+                                "publisher": data.items[dataNum].volumeInfo.publisher,
+                                "publishedDate": data.items[dataNum].volumeInfo.publishedDate
+                            },
+                            dataType: 'JSON'
+                        }).done((data, textStatus, jqXHR) => {console.log(data)
+                            if (data.QueryError) {
+                                window.alert(data.QueryError);
+                            }
+                            else if (data.QuerySuccess){
+                                window.alert(data.QuerySuccess);
+                            }
+                        });
+                    });
                 });
             });
 
-            $('#prev').on('click', (e) => {
+            $(document).on('click', '#prev', (e) => {
                 e.preventDefault();
                 page--;
-                $('#submit').trigger('click');
+                $('#search').trigger('click');
             });
 
-            $('#next').on('click', (e) => {
+            $(document).on('click', '#next', (e) => {
                 e.preventDefault();
                 page++;
-                $('#submit').trigger('click');
+                $('#search').trigger('click');
             });
         });
     </script>

@@ -1,9 +1,10 @@
 <?php
 
 // 1. POSTデータ取得
-$bookname = $_POST["bookname"];
-$bookurl = $_POST["bookurl"];
-$bookcomment = $_POST["bookcomment"];
+$title = $_POST['title'] ?? '';
+$authors = $_POST['authors'] ?? '';
+$publisher = $_POST['publisher'] ?? '';
+$publishedDate = $_POST['publishedDate'] ?? '';
 
 // 2. DB接続します
 try {
@@ -13,19 +14,21 @@ try {
 }
 
 // 3. データ登録SQL作成
-$stmt = $pdo->prepare("INSERT INTO gs_bm_table( id, bookname, bookurl, bookcomment, indate)VALUES( null, :bookname, :bookurl, :bookcomment, sysdate())");
-$stmt->bindValue(':bookname', $bookname, PDO::PARAM_STR);  //Integer（数値の場合 PDO::PARAM_INT)
-$stmt->bindValue(':bookurl', $bookurl, PDO::PARAM_STR);  //Integer（数値の場合 PDO::PARAM_INT)
-$stmt->bindValue(':bookcomment', $bookcomment, PDO::PARAM_STR);  //Integer（数値の場合 PDO::PARAM_INT)
+$stmt = $pdo->prepare("INSERT INTO gs_bd_table( id, title, authors, publisher, publishedDate)VALUES( null, :title, :authors, :publisher, :publishedDate)");
+$stmt->bindValue(':title', $title, PDO::PARAM_STR);  //Integer（数値の場合 PDO::PARAM_INT)
+$stmt->bindValue(':authors', $authors, PDO::PARAM_STR);  //Integer（数値の場合 PDO::PARAM_INT)
+$stmt->bindValue(':publisher', $publisher, PDO::PARAM_STR);  //Integer（数値の場合 PDO::PARAM_INT)
+$stmt->bindValue(':publishedDate', $publishedDate, PDO::PARAM_STR);  //Integer（数値の場合 PDO::PARAM_INT)
 $status = $stmt->execute();
 
-//４．データ登録処理後
-if ($status == false) {
-    //SQL実行時にエラーがある場合（エラーオブジェクト取得して表示）
+// 4. データ登録処理後
+header('Content-Type: application/json; charset=utf-8');
+if ($status === false) {
+    // SQL実行時にエラーがある場合（エラーオブジェクト取得して表示）
     $error = $stmt->errorInfo();
-    exit("QueryError:" . $error[2]);
-} else {
-    //５．index.phpへリダイレクト　この処理がないと画面が切り替わらない
-    header("Location: index.php");
-    exit;
+    echo json_encode(["QueryError" => $error[2]]);
+}
+else {
+    // SQL実行時にエラーがない場合
+    echo json_encode(["QuerySuccess" => "正常に保存されました"]);
 }
